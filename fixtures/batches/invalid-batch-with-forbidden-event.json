@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "signallake.event-batch.v1",
+  "batchId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  "createdAt": "2026-07-05T06:02:00.000Z",
+  "source": {
+    "appId": "app.picpeek.desktop",
+    "product": "PicPeek",
+    "sdkName": "signallake-js-tauri",
+    "sdkVersion": "0.0.0-phase0a",
+    "environment": "test"
+  },
+  "eventCount": 1,
+  "compression": "none",
+  "events": [
+    {
+      "schemaVersion": "signallake.event-envelope.v1",
+      "eventId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+      "occurredAt": "2026-07-05T06:02:00.000Z",
+      "collectedAt": "2026-07-05T06:02:00.040Z",
+      "source": {
+        "appId": "app.picpeek.desktop",
+        "product": "PicPeek",
+        "sdkName": "signallake-js-tauri",
+        "sdkVersion": "0.0.0-phase0a",
+        "platform": "tauri",
+        "appVersion": "0.1.0",
+        "environment": "test"
+      },
+      "identity": {
+        "anonymousId": "anon_picpeek_dev_001",
+        "deviceId": "device_picpeek_dev_001"
+      },
+      "session": {
+        "sessionId": "session_picpeek_dev_001",
+        "startedAt": "2026-07-05T06:00:00.000Z",
+        "sequence": 9
+      },
+      "event": {
+        "name": "command.invoked",
+        "category": "command",
+        "properties": {
+          "commandId": "folder.open",
+          "folderName": "Private Photos"
+        }
+      },
+      "privacy": {
+        "privacyClass": "behavioral",
+        "consent": {
+          "analytics": true,
+          "diagnostics": true
+        },
+        "redactedFields": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "manifestVersion": "signallake.event-manifest.v1",
+  "catalogVersion": "signallake.catalog.picpeek.v1",
+  "product": "PicPeek",
+  "appId": "app.picpeek.desktop",
+  "owner": "picpeek-product",
+  "notes": "Phase 0B dry-run manifest. No filenames, file paths, image contents, or clipboard contents.",
+  "events": [
+    {
+      "name": "app.opened",
+      "category": "lifecycle",
+      "description": "User opens the PicPeek desktop app.",
+      "trigger": "App process starts and UI becomes ready.",
+      "privacyClass": "behavioral",
+      "status": "active",
+      "owner": "picpeek-product",
+      "since": "signallake.catalog.picpeek.v1",
+      "properties": [
+        {
+          "name": "launchType",
+          "type": "string",
+          "scope": "product",
+          "required": true,
+          "enum": [
+            "manual",
+            "restore",
+            "deepLink"
+          ],
+          "description": "How the app was launched."
+        }
+      ]
+    },
+    {
+      "name": "screen.viewed",
+      "category": "screen",
+      "description": "User views a stable app screen.",
+      "trigger": "Route or primary screen changes.",
+      "privacyClass": "behavioral",
+      "status": "active",
+      "owner": "picpeek-product",
+      "since": "signallake.catalog.picpeek.v1",
+      "properties": [
+        {
+          "name": "screenId",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "enum": [
+            "library",
+            "preview",
+            "settings"
+          ],
+          "description": "Stable semantic screen id."
+        },
+        {
+          "name": "routeKey",
+          "type": "string",
+          "scope": "product",
+          "required": false,
+          "description": "Non-sensitive route grouping key."
+        }
+      ]
+    },
+    {
+      "name": "command.invoked",
+      "category": "command",
+      "description": "User invokes a semantic command.",
+      "trigger": "Toolbar, menu, shortcut, or command palette action.",
+      "privacyClass": "behavioral",
+      "status": "active",
+      "owner": "picpeek-product",
+      "since": "signallake.catalog.picpeek.v1",
+      "properties": [
+        {
+          "name": "commandId",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "enum": [
+            "folder.open",
+            "image.next",
+            "image.previous",
+            "settings.open"
+          ],
+          "description": "Stable command id."
+        },
+        {
+          "name": "entry",
+          "type": "string",
+          "scope": "product",
+          "required": false,
+          "enum": [
+            "toolbar",
+            "menu",
+            "shortcut",
+            "palette"
+          ],
+          "description": "Where the command was invoked."
+        },
+        {
+          "name": "hasSelection",
+          "type": "boolean",
+          "scope": "product",
+          "required": false,
+          "description": "Whether a non-sensitive selection existed."
+        }
+      ]
+    },
+    {
+      "name": "error.occurred",
+      "category": "error",
+      "description": "Recoverable app or SDK error occurred.",
+      "trigger": "Handled error path records an error code.",
+      "privacyClass": "diagnostic",
+      "status": "active",
+      "owner": "picpeek-product",
+      "since": "signallake.catalog.picpeek.v1",
+      "properties": [
+        {
+          "name": "errorCode",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "description": "Stable non-sensitive error code."
+        },
+        {
+          "name": "severity",
+          "type": "string",
+          "scope": "product",
+          "required": true,
+          "enum": [
+            "warning",
+            "error"
+          ],
+          "description": "Operational severity."
+        },
+        {
+          "name": "recoverable",
+          "type": "boolean",
+          "scope": "product",
+          "required": true,
+          "description": "Whether app can continue."
+        }
+      ]
+    }
+  ]
+}

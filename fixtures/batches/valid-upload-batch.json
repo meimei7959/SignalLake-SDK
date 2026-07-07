@@ -1,0 +1,97 @@
+{
+  "schemaVersion": "signallake.event-batch.v1",
+  "batchId": "88888888-8888-4888-8888-888888888888",
+  "createdAt": "2026-07-05T06:01:00.000Z",
+  "source": {
+    "appId": "app.picpeek.desktop",
+    "product": "PicPeek",
+    "sdkName": "signallake-js-tauri",
+    "sdkVersion": "0.0.0-phase0a",
+    "environment": "test"
+  },
+  "eventCount": 2,
+  "compression": "none",
+  "events": [
+    {
+      "schemaVersion": "signallake.event-envelope.v1",
+      "catalogVersion": "signallake.catalog.picpeek.v1",
+      "eventId": "99999999-9999-4999-8999-999999999999",
+      "occurredAt": "2026-07-05T06:01:00.000Z",
+      "collectedAt": "2026-07-05T06:01:00.040Z",
+      "source": {
+        "appId": "app.picpeek.desktop",
+        "product": "PicPeek",
+        "sdkName": "signallake-js-tauri",
+        "sdkVersion": "0.0.0-phase0a",
+        "platform": "tauri",
+        "appVersion": "0.1.0",
+        "environment": "test"
+      },
+      "identity": {
+        "anonymousId": "anon_picpeek_dev_001",
+        "deviceId": "device_picpeek_dev_001"
+      },
+      "session": {
+        "sessionId": "session_picpeek_dev_001",
+        "startedAt": "2026-07-05T06:00:00.000Z",
+        "sequence": 7
+      },
+      "event": {
+        "name": "app.opened",
+        "category": "lifecycle",
+        "properties": {
+          "launchType": "manual"
+        }
+      },
+      "privacy": {
+        "privacyClass": "behavioral",
+        "consent": {
+          "analytics": true,
+          "diagnostics": true
+        },
+        "redactedFields": []
+      }
+    },
+    {
+      "schemaVersion": "signallake.event-envelope.v1",
+      "catalogVersion": "signallake.catalog.picpeek.v1",
+      "eventId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "occurredAt": "2026-07-05T06:01:05.000Z",
+      "collectedAt": "2026-07-05T06:01:05.040Z",
+      "source": {
+        "appId": "app.picpeek.desktop",
+        "product": "PicPeek",
+        "sdkName": "signallake-js-tauri",
+        "sdkVersion": "0.0.0-phase0a",
+        "platform": "tauri",
+        "appVersion": "0.1.0",
+        "environment": "test"
+      },
+      "identity": {
+        "anonymousId": "anon_picpeek_dev_001",
+        "deviceId": "device_picpeek_dev_001"
+      },
+      "session": {
+        "sessionId": "session_picpeek_dev_001",
+        "startedAt": "2026-07-05T06:00:00.000Z",
+        "sequence": 8
+      },
+      "event": {
+        "name": "screen.viewed",
+        "category": "screen",
+        "properties": {
+          "screenId": "library",
+          "routeKey": "main"
+        }
+      },
+      "privacy": {
+        "privacyClass": "behavioral",
+        "consent": {
+          "analytics": true,
+          "diagnostics": true
+        },
+        "redactedFields": []
+      }
+    }
+  ]
+}

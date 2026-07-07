@@ -1,0 +1,237 @@
+{
+  "manifestVersion": "signallake.event-manifest.v1",
+  "catalogVersion": "signallake.catalog.cast-sdk.receiver.v1",
+  "product": "Cast-SDK",
+  "appId": "com.zknowai.labi.cast.receiver",
+  "owner": "cast-sdk-product",
+  "notes": "Phase 0B representative Cast-SDK receiver manifest. Media titles, URLs, filenames, and receiver personal names are excluded.",
+  "events": [
+    {
+      "name": "app.opened",
+      "category": "lifecycle",
+      "description": "Receiver app opens.",
+      "trigger": "Receiver app starts and SDK initializes after consent.",
+      "privacyClass": "behavioral",
+      "status": "active",
+      "owner": "cast-sdk-product",
+      "since": "signallake.catalog.cast-sdk.receiver.v1",
+      "properties": [
+        {
+          "name": "launchType",
+          "type": "string",
+          "scope": "product",
+          "required": true,
+          "enum": [
+            "manual",
+            "restore",
+            "deepLink"
+          ],
+          "description": "How the sender app was launched."
+        }
+      ]
+    },
+    {
+      "name": "command.invoked",
+      "category": "command",
+      "description": "Receiver app invokes a semantic command.",
+      "trigger": "App layer or analytics adapter records a stable receiver command.",
+      "privacyClass": "behavioral",
+      "status": "active",
+      "owner": "cast-sdk-product",
+      "since": "signallake.catalog.cast-sdk.receiver.v1",
+      "properties": [
+        {
+          "name": "commandId",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "enum": [
+            "player.start",
+            "player.stop",
+            "receiver.ready"
+          ],
+          "description": "Stable receiver command id."
+        },
+        {
+          "name": "protocol",
+          "type": "string",
+          "scope": "common",
+          "required": false,
+          "enum": [
+            "dlna",
+            "local",
+            "unknown"
+          ],
+          "description": "Receiver command protocol when relevant."
+        },
+        {
+          "name": "playerBackend",
+          "type": "string",
+          "scope": "common",
+          "required": false,
+          "description": "Stable player backend id."
+        },
+        {
+          "name": "mediaKind",
+          "type": "string",
+          "scope": "common",
+          "required": false,
+          "enum": [
+            "image",
+            "video",
+            "audio",
+            "unknown"
+          ],
+          "description": "Coarse media kind."
+        },
+        {
+          "name": "outcome",
+          "type": "string",
+          "scope": "common",
+          "required": false,
+          "enum": [
+            "success",
+            "failure",
+            "unknown"
+          ],
+          "description": "Command outcome."
+        },
+        {
+          "name": "channelId",
+          "type": "string",
+          "scope": "common",
+          "required": false,
+          "description": "Distribution channel id."
+        },
+        {
+          "name": "buildId",
+          "type": "string",
+          "scope": "common",
+          "required": false,
+          "description": "Build id."
+        }
+      ]
+    },
+    {
+      "name": "cast.started",
+      "category": "media",
+      "description": "A cast session starts.",
+      "trigger": "Receiver confirms a cast session is active.",
+      "privacyClass": "behavioral",
+      "status": "active",
+      "owner": "cast-sdk-product",
+      "since": "signallake.catalog.cast-sdk.receiver.v1",
+      "properties": [
+        {
+          "name": "protocol",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "enum": [
+            "airplay",
+            "dlna",
+            "chromecast",
+            "miracast"
+          ],
+          "description": "Casting protocol."
+        },
+        {
+          "name": "receiverType",
+          "type": "string",
+          "scope": "product",
+          "required": true,
+          "enum": [
+            "tv",
+            "speaker",
+            "display",
+            "unknown"
+          ],
+          "description": "Coarse receiver category."
+        }
+      ]
+    },
+    {
+      "name": "cast.failed",
+      "category": "media",
+      "description": "A cast attempt fails.",
+      "trigger": "Receiver cannot establish or keep a cast session.",
+      "privacyClass": "diagnostic",
+      "status": "active",
+      "owner": "cast-sdk-product",
+      "since": "signallake.catalog.cast-sdk.receiver.v1",
+      "properties": [
+        {
+          "name": "protocol",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "enum": [
+            "airplay",
+            "dlna",
+            "chromecast",
+            "miracast"
+          ],
+          "description": "Casting protocol."
+        },
+        {
+          "name": "receiverType",
+          "type": "string",
+          "scope": "product",
+          "required": true,
+          "enum": [
+            "tv",
+            "speaker",
+            "display",
+            "unknown"
+          ],
+          "description": "Coarse receiver category."
+        },
+        {
+          "name": "errorCode",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "description": "Stable non-sensitive failure code."
+        }
+      ]
+    },
+    {
+      "name": "receiver.discovered",
+      "category": "media",
+      "description": "A receiver class is discovered.",
+      "trigger": "Discovery adapter emits a receiver candidate.",
+      "privacyClass": "operational",
+      "status": "active",
+      "owner": "cast-sdk-product",
+      "since": "signallake.catalog.cast-sdk.receiver.v1",
+      "properties": [
+        {
+          "name": "protocol",
+          "type": "string",
+          "scope": "common",
+          "required": true,
+          "enum": [
+            "airplay",
+            "dlna",
+            "chromecast",
+            "miracast"
+          ],
+          "description": "Discovery protocol."
+        },
+        {
+          "name": "receiverType",
+          "type": "string",
+          "scope": "product",
+          "required": true,
+          "enum": [
+            "tv",
+            "speaker",
+            "display",
+            "unknown"
+          ],
+          "description": "Coarse receiver category."
+        }
+      ]
+    }
+  ]
+}

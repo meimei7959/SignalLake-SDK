@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "signallake.encrypted-event-batch.v1",
+  "batchId": "99999999-9999-4999-8999-999999999999",
+  "createdAt": "2026-07-05T06:00:00.000Z",
+  "source": {
+    "appId": "app.picpeek.desktop",
+    "product": "PicPeek",
+    "sdkName": "signallake-js-tauri",
+    "sdkVersion": "0.0.0-fixture",
+    "environment": "test"
+  },
+  "plaintext": {
+    "schemaVersion": "signallake.event-batch.v1",
+    "contentType": "application/vnd.signallake.event-batch+json;v=1"
+  },
+  "encryption": {
+    "alg": "AES-256-GCM",
+    "keyId": "fixture-local-key",
+    "nonce": "MTIzNDU2Nzg5MDEy"
+  },
+  "payload": {
+    "encoding": "base64url",
+    "ciphertext": "Y2lwaGVydGV4dA",
+    "authTag": "MDEyMzQ1Njc4OWFiY2RlZg"
+  }
+}

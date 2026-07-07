@@ -1,0 +1,27 @@
+{
+  "name": "signallake-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SignalLake SDK contract-first data instrumentation assets.",
+  "scripts": {
+    "schema-check": "node tools/schema-check/index.mjs",
+    "fixture-check": "node tools/fixture-check/index.mjs",
+    "manifest-lint": "node tools/manifest-lint/index.mjs",
+    "catalog-check": "node tools/catalog-check/index.mjs",
+    "common-fields-check": "node tools/common-fields-check/index.mjs",
+    "delivery-check": "node tools/delivery-check/index.mjs",
+    "platform-check": "node tools/platform-check/index.mjs",
+    "android-sdk-check": "node tools/android-sdk-check/index.mjs",
+    "android:verify-release": "bash scripts/android/verify-release.sh",
+    "android:assemble-test": "bash scripts/android/assemble-android-test.sh",
+    "android:verify-api19": "bash scripts/android/verify-api19-emulator.sh",
+    "pilot-check": "node tools/pilot-check/index.mjs",
+    "unit-test": "node --test tests/*.test.mjs",
+    "pilot:picpeek": "node pilots/picpeek/run-dry-run.mjs",
+    "relay:dev": "node relay/service/src/server.mjs",
+    "relay:healthcheck": "node relay/service/src/healthcheck.mjs",
+    "relay:verify-local": "node scripts/relay/verify-local-encrypted-upload.mjs",
+    "test": "npm run schema-check && npm run fixture-check && npm run manifest-lint && npm run catalog-check && npm run common-fields-check && npm run delivery-check && npm run platform-check && npm run android-sdk-check && npm run pilot-check && npm run unit-test"
+  }
+}

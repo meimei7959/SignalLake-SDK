@@ -1,0 +1,26 @@
+services:
+  signallake-relay:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: signallake-relay:pilot
+    ports:
+      - "${PORT:-4318}:4318"
+    environment:
+      PORT: 4318
+      SIGNALLAKE_RELAY_TOKEN: ${SIGNALLAKE_RELAY_TOKEN:?set SIGNALLAKE_RELAY_TOKEN}
+      SIGNALLAKE_RELAY_STORE_PATH: ${SIGNALLAKE_RELAY_STORE_PATH:-/data/signallake/relay-store.json}
+      SIGNALLAKE_RELAY_MAX_ATTEMPTS: ${SIGNALLAKE_RELAY_MAX_ATTEMPTS:-3}
+      SIGNALLAKE_RELAY_RETENTION_MS: ${SIGNALLAKE_RELAY_RETENTION_MS:-604800000}
+    volumes:
+      - signallake-relay-data:/data/signallake
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "relay/service/src/healthcheck.mjs"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  signallake-relay-data:

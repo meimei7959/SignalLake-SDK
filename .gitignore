@@ -1,0 +1,31 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Local agent/workspace state
+.agent-os/
+.codegraph/
+.gradle-verify/
+AGENTS.md
+CLAUDE.md
+START_HERE.md
+rulepack.json
+
+# Local relay data
+.signallake/
+
+# Node / build outputs
+node_modules/
+build/
+
+# Android / Gradle outputs
+.gradle/
+**/.gradle/
+**/build/
+**/target/
+*.iml
+.idea/
+sdk/android/.gradle/
+sdk/android/**/build/

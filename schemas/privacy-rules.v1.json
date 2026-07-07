@@ -1,0 +1,81 @@
+{
+  "$schema": "https://signallake.dev/schemas/privacy-rules.v1.json",
+  "version": "signallake.privacy-rules.v1",
+  "description": "Phase 0A privacy guardrail rules for SignalLake SDK fixtures and local checks.",
+  "eventPropertyPolicy": {
+    "allowedValueTypes": [
+      "string",
+      "number",
+      "integer",
+      "boolean",
+      "null"
+    ],
+    "forbiddenPropertyNames": [
+      "absolutePath",
+      "androidId",
+      "android_id",
+      "base64",
+      "bssid",
+      "clipboard",
+      "clipboardText",
+      "content",
+      "email",
+      "fileName",
+      "filePath",
+      "folderName",
+      "folderPath",
+      "imei",
+      "imageData",
+      "ip",
+      "mac",
+      "metadata",
+      "password",
+      "phone",
+      "rawContent",
+      "rawText",
+      "ssid",
+      "secret",
+      "title",
+      "token",
+      "url",
+      "uri"
+    ],
+    "forbiddenNamePatterns": [
+      "(^|_)(file|folder)?path$",
+      "(^|_)(file|folder)?name$",
+      "(^|_)(url|uri)$",
+      "(^|_)clipboard",
+      "(^|_)raw",
+      "(^|_)(ip|mac|ssid|bssid|imei|androidid|android_id)$",
+      "(^|_)(title|metadata)$",
+      "(^|_)(password|secret|token)$",
+      "(^|_)(email|phone)$"
+    ],
+    "forbiddenStringValuePatterns": [
+      {
+        "id": "unix-absolute-path",
+        "pattern": "^/(Users|home|var|tmp|private|Volumes)/"
+      },
+      {
+        "id": "windows-absolute-path",
+        "pattern": "^[A-Za-z]:\\\\\\\\"
+      },
+      {
+        "id": "looks-like-email",
+        "pattern": "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\\\.[A-Za-z]{2,}"
+      },
+      {
+        "id": "looks-like-url",
+        "pattern": "^[a-zA-Z][a-zA-Z0-9+.-]*://"
+      },
+      {
+        "id": "looks-like-ipv4",
+        "pattern": "^(?:\\\\d{1,3}\\\\.){3}\\\\d{1,3}$"
+      },
+      {
+        "id": "looks-like-mac",
+        "pattern": "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$"
+      }
+    ]
+  }
+}

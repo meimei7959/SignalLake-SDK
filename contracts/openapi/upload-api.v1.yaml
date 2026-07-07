@@ -1,0 +1,34 @@
+openapi: 3.1.0
+info:
+  title: SignalLake Upload API
+  version: v1
+paths:
+  /healthz:
+    get:
+      summary: Relay health check
+      responses:
+        "200":
+          description: Relay is alive
+  /v1/upload:
+    post:
+      summary: Upload an encrypted SignalLake event batch
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../../schemas/encrypted-event-batch.v1.json
+      responses:
+        "202":
+          description: Batch accepted or duplicate acknowledged
+        "401":
+          description: Missing or invalid bearer token
+        "422":
+          description: Encrypted batch envelope failed schema validation
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

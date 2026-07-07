@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://signallake.dev/schemas/event-batch.v1.json",
+  "title": "SignalLake Event Batch v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "batchId",
+    "createdAt",
+    "source",
+    "eventCount",
+    "compression",
+    "events"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "signallake.event-batch.v1"
+    },
+    "batchId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "appId",
+        "product",
+        "sdkName",
+        "sdkVersion",
+        "environment"
+      ],
+      "properties": {
+        "appId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)+$",
+          "maxLength": 96
+        },
+        "product": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "sdkName": {
+          "type": "string",
+          "pattern": "^signallake-[a-z0-9-]+$",
+          "maxLength": 64
+        },
+        "sdkVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "dev",
+            "test",
+            "staging",
+            "prod"
+          ]
+        }
+      }
+    },
+    "eventCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "compression": {
+      "type": "string",
+      "enum": [
+        "none"
+      ]
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "$ref": "event-envelope.v1.json"
+      }
+    }
+  }
+}

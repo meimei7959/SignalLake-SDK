@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://signallake.dev/schemas/common-properties.v1.json",
+  "title": "SignalLake Common Event Properties v1",
+  "type": "object",
+  "additionalProperties": {
+    "type": [
+      "string",
+      "number",
+      "integer",
+      "boolean",
+      "null"
+    ]
+  },
+  "maxProperties": 50,
+  "propertyNames": {
+    "pattern": "^[a-z][a-zA-Z0-9_]{0,63}$"
+  },
+  "x-signallake-version": "signallake.common-fields.v1",
+  "x-signallake-naming": "camelCase",
+  "x-signallake-policy": {
+    "sdkMaintained": [
+      "channelId",
+      "channelName",
+      "buildId",
+      "versionCode",
+      "distribution",
+      "locale",
+      "timezone",
+      "networkType",
+      "deviceTier",
+      "osVersion",
+      "appForeground",
+      "sessionDurationBucket",
+      "durationBucket",
+      "outcome",
+      "errorCode",
+      "screenId",
+      "commandId",
+      "protocol",
+      "playerBackend",
+      "mediaKind"
+    ],
+    "productMaintained": "Product-specific fields are allowed when they pass privacy filtering and product manifest review.",
+    "deprecation": "Never repurpose a field. Add a new field, keep the old field readable for at least one schema version, and mark it with x-signallake-status=deprecated."
+  },
+  "properties": {
+    "channelId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,63}$",
+      "maxLength": 64,
+      "description": "Distribution or product channel identifier, for example official or tv_store.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "channelName": {
+      "type": "string",
+      "maxLength": 64,
+      "description": "Human-readable channel label. Prefer channelId for analytics joins.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "buildId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:-]{1,80}$",
+      "maxLength": 80,
+      "description": "Build, CI, or release artifact identifier.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "versionCode": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Monotonic platform build number when available.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "android-context-or-host"
+    },
+    "distribution": {
+      "type": "string",
+      "enum": [
+        "official",
+        "app-store",
+        "enterprise",
+        "internal",
+        "test",
+        "unknown"
+      ],
+      "description": "How the app was distributed.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[A-Za-z]{2,8}([_-][A-Za-z0-9]{2,8})*$",
+      "maxLength": 35,
+      "description": "Runtime locale tag.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "android-context-or-host"
+    },
+    "timezone": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_+./:-]{1,64}$",
+      "maxLength": 64,
+      "description": "Runtime timezone identifier or offset.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "android-context-or-host"
+    },
+    "networkType": {
+      "type": "string",
+      "enum": [
+        "wifi",
+        "ethernet",
+        "cellular",
+        "offline",
+        "unknown"
+      ],
+      "description": "Coarse network class. Do not send SSID, BSSID, IP, or MAC.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "deviceTier": {
+      "type": "string",
+      "enum": [
+        "low",
+        "mid",
+        "high",
+        "unknown"
+      ],
+      "description": "Coarse device capability tier.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "osVersion": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._ -]{1,40}$",
+      "maxLength": 40,
+      "description": "Operating system release version.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "android-context-or-host"
+    },
+    "appForeground": {
+      "type": "boolean",
+      "description": "Whether the app was foreground when the event was captured.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "sessionDurationBucket": {
+      "type": "string",
+      "enum": [
+        "0_10s",
+        "10_30s",
+        "30_60s",
+        "1_5m",
+        "5_30m",
+        "30m_plus",
+        "unknown"
+      ],
+      "description": "Coarse session duration bucket.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host-or-sdk"
+    },
+    "durationBucket": {
+      "type": "string",
+      "enum": [
+        "0_1s",
+        "1_3s",
+        "3_10s",
+        "10_30s",
+        "30_60s",
+        "1_5m",
+        "5m_plus",
+        "unknown"
+      ],
+      "description": "Coarse operation or media duration bucket.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host-or-sdk"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "skipped",
+        "unknown"
+      ],
+      "description": "Operation result.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host-or-sdk"
+    },
+    "errorCode": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{1,63}$",
+      "maxLength": 64,
+      "description": "Stable non-PII error code. Do not send raw exception messages or stack traces.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host-or-sdk"
+    },
+    "screenId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)*$",
+      "maxLength": 96,
+      "description": "Stable screen or route identifier.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host-or-sdk"
+    },
+    "commandId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)*$",
+      "maxLength": 96,
+      "description": "Stable semantic command identifier.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host-or-sdk"
+    },
+    "protocol": {
+      "type": "string",
+      "enum": [
+        "dlna",
+        "airplay",
+        "miracast",
+        "chromecast",
+        "local",
+        "unknown"
+      ],
+      "description": "Coarse protocol family.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "playerBackend": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,63}$",
+      "maxLength": 64,
+      "description": "Stable player backend identifier.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    },
+    "mediaKind": {
+      "type": "string",
+      "enum": [
+        "image",
+        "video",
+        "audio",
+        "live",
+        "document",
+        "unknown"
+      ],
+      "description": "Coarse media kind. Do not send titles, filenames, URLs, or raw metadata.",
+      "x-signallake-owner": "sdk-common-property",
+      "x-signallake-source": "host"
+    }
+  }
+}

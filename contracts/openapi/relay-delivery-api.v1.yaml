@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: SignalLake Relay Delivery API
+  version: v1
+paths:
+  /readyz:
+    get:
+      summary: Relay readiness including store kind and delivery status counts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Relay is ready
+  /v1/metrics:
+    get:
+      summary: Relay JSON metrics snapshot
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Metrics snapshot
+  /metrics:
+    get:
+      summary: Relay text metrics for scrape-friendly local integration
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Text metrics
+  /v1/retention/prune:
+    post:
+      summary: Manually prune retained delivery state
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statuses:
+                  type: array
+                  items:
+                    type: string
+                    enum:
+                      - acked
+                      - dead_letter
+                olderThanMs:
+                  type: integer
+                  minimum: 0
+      responses:
+        "200":
+          description: Retention prune result
+  /v1/delivery/pull:
+    get:
+      summary: Pull queued deliveries for a local receiver
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+      responses:
+        "200":
+          description: Delivery batch list
+  /v1/delivery/ack:
+    post:
+      summary: Acknowledge a delivery after local receiver persistence
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deliveryId
+              properties:
+                deliveryId:
+                  type: string
+      responses:
+        "200":
+          description: Delivery acknowledged
+        "404":
+          description: Delivery not found
+  /v1/delivery/nack:
+    post:
+      summary: Requeue or dead-letter a delivery
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deliveryId
+              properties:
+                deliveryId:
+                  type: string
+      responses:
+        "200":
+          description: Delivery requeued or dead-lettered
+        "404":
+          description: Delivery not found
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

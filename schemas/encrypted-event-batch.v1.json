@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://signallake.dev/schemas/encrypted-event-batch.v1.json",
+  "title": "SignalLake Encrypted Event Batch v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "batchId",
+    "createdAt",
+    "source",
+    "plaintext",
+    "encryption",
+    "payload"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "signallake.encrypted-event-batch.v1"
+    },
+    "batchId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "appId",
+        "product",
+        "sdkName",
+        "sdkVersion",
+        "environment"
+      ],
+      "properties": {
+        "appId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)+$",
+          "maxLength": 96
+        },
+        "product": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "sdkName": {
+          "type": "string",
+          "pattern": "^signallake-[a-z0-9-]+$",
+          "maxLength": 64
+        },
+        "sdkVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "dev",
+            "test",
+            "staging",
+            "prod"
+          ]
+        }
+      }
+    },
+    "plaintext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "contentType"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "signallake.event-batch.v1"
+        },
+        "contentType": {
+          "const": "application/vnd.signallake.event-batch+json;v=1"
+        }
+      }
+    },
+    "encryption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alg",
+        "keyId",
+        "nonce"
+      ],
+      "properties": {
+        "alg": {
+          "const": "AES-256-GCM"
+        },
+        "keyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "minLength": 16,
+          "maxLength": 16
+        }
+      }
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "encoding",
+        "ciphertext",
+        "authTag"
+      ],
+      "properties": {
+        "encoding": {
+          "const": "base64url"
+        },
+        "ciphertext": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "minLength": 1
+        },
+        "authTag": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "minLength": 22,
+          "maxLength": 22
+        }
+      }
+    }
+  }
+}

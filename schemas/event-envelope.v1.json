@@ -1,0 +1,240 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://signallake.dev/schemas/event-envelope.v1.json",
+  "title": "SignalLake Event Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "catalogVersion",
+    "eventId",
+    "occurredAt",
+    "collectedAt",
+    "source",
+    "identity",
+    "session",
+    "event",
+    "privacy"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "signallake.event-envelope.v1"
+    },
+    "catalogVersion": {
+      "type": "string",
+      "pattern": "^signallake\\.catalog\\.[a-z0-9.-]+\\.v[0-9]+$",
+      "maxLength": 96
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "collectedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "appId",
+        "product",
+        "sdkName",
+        "sdkVersion",
+        "platform",
+        "environment"
+      ],
+      "properties": {
+        "appId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)+$",
+          "maxLength": 96
+        },
+        "product": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "sdkName": {
+          "type": "string",
+          "pattern": "^signallake-[a-z0-9-]+$",
+          "maxLength": 64
+        },
+        "sdkVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "platform": {
+          "type": "string",
+          "enum": [
+            "web",
+            "tauri",
+            "desktop",
+            "android",
+            "android-tv",
+            "ios",
+            "server"
+          ]
+        },
+        "appVersion": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "environment": {
+          "type": "string",
+          "enum": [
+            "dev",
+            "test",
+            "staging",
+            "prod"
+          ]
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "anonymousId",
+        "deviceId"
+      ],
+      "properties": {
+        "anonymousId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        },
+        "deviceId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sessionId",
+        "startedAt",
+        "sequence"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "category",
+        "properties"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)+$",
+          "maxLength": 96
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "lifecycle",
+            "screen",
+            "command",
+            "error",
+            "domain",
+            "media",
+            "system"
+          ]
+        },
+        "properties": {
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "common-properties.v1.json"
+            }
+          ],
+          "maxProperties": 50,
+          "propertyNames": {
+            "pattern": "^[a-z][a-zA-Z0-9_]{0,63}$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "integer",
+              "boolean",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "privacyClass",
+        "consent",
+        "redactedFields"
+      ],
+      "properties": {
+        "privacyClass": {
+          "type": "string",
+          "enum": [
+            "operational",
+            "behavioral",
+            "diagnostic"
+          ]
+        },
+        "consent": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "analytics",
+            "diagnostics"
+          ],
+          "properties": {
+            "analytics": {
+              "type": "boolean"
+            },
+            "diagnostics": {
+              "type": "boolean"
+            }
+          }
+        },
+        "redactedFields": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 128
+          }
+        }
+      }
+    }
+  }
+}

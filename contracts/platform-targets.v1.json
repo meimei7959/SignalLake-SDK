@@ -1,0 +1,45 @@
+{
+  "version": "signallake.platform-targets.v1",
+  "targets": [
+    {
+      "id": "rust-desktop",
+      "language": "rust",
+      "platforms": ["desktop", "tauri"],
+      "entrypoint": "sdk/rust/signallake-core/src/lib.rs",
+      "requiredCapabilities": [
+        "event-builder",
+        "privacy-filter",
+        "memory-queue",
+        "batch-builder",
+        "payload-encryption"
+      ]
+    },
+    {
+      "id": "android",
+      "language": "java",
+      "platforms": ["android", "android-tv"],
+      "entrypoint": "sdk/android/signallake-android/src/main/java/dev/signallake/SignalLake.java",
+      "requiredCapabilities": [
+        "event-builder",
+        "privacy-filter",
+        "memory-queue",
+        "batch-builder",
+        "payload-encryption",
+        "android-tv-queue-policy"
+      ]
+    },
+    {
+      "id": "ios",
+      "language": "swift",
+      "platforms": ["ios"],
+      "entrypoint": "sdk/ios/Sources/SignalLake/SignalLake.swift",
+      "requiredCapabilities": [
+        "event-builder",
+        "privacy-filter",
+        "memory-queue",
+        "batch-builder",
+        "payload-encryption"
+      ]
+    }
+  ]
+}

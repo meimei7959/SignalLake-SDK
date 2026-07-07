@@ -1,0 +1,65 @@
+{
+  "pilot": "picpeek-dry-run",
+  "product": "PicPeek",
+  "mode": "dry-run-local-relay",
+  "networkDefault": "off",
+  "manifest": "fixtures/manifests/picpeek.sample-manifest.json",
+  "events": [
+    {
+      "name": "app.opened",
+      "sourceSignal": "Tauri app process starts and primary window is ready",
+      "properties": {
+        "launchType": "manual"
+      },
+      "forbidden": []
+    },
+    {
+      "name": "screen.viewed",
+      "sourceSignal": "User enters library, preview, or settings view",
+      "properties": {
+        "screenId": "library",
+        "routeKey": "main"
+      },
+      "forbidden": [
+        "filePath",
+        "fileName",
+        "imageData"
+      ]
+    },
+    {
+      "name": "command.invoked",
+      "sourceSignal": "Toolbar, menu, shortcut, or command palette action",
+      "properties": {
+        "commandId": "folder.open",
+        "entry": "toolbar",
+        "hasSelection": false
+      },
+      "forbidden": [
+        "folderPath",
+        "folderName",
+        "clipboardText"
+      ]
+    },
+    {
+      "name": "error.occurred",
+      "sourceSignal": "Handled PicPeek or SignalLake SDK error",
+      "properties": {
+        "errorCode": "E_QUEUE_WRITE_FAILED",
+        "severity": "error",
+        "recoverable": true
+      },
+      "forbidden": [
+        "rawContent",
+        "filePath",
+        "clipboardText"
+      ]
+    }
+  ],
+  "acceptance": [
+    "All mapped events are present in PicPeek manifest.",
+    "Dry-run SDK emits one batch with four events.",
+    "Forbidden file path and clipboard fields are rejected before enqueue.",
+    "Local relay accepts, pulls, and ACKs the batch.",
+    "No upload happens unless pilot harness explicitly calls relay."
+  ]
+}

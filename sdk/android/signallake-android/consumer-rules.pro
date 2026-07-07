@@ -1,0 +1,13 @@
+-keep class dev.signallake.SignalLakeClient { *; }
+-keep class dev.signallake.SignalLake { *; }
+-keep class dev.signallake.SignalLakeConfig { *; }
+-keep class dev.signallake.SignalLakeEventCatalog { *; }
+-keep class dev.signallake.SignalLakeEventDefinition { *; }
+-keep class dev.signallake.SignalLakePropertyDefinition { *; }
+-keep class dev.signallake.SignalLakeRejectListener { *; }
+-keep class dev.signallake.SignalLakeKeyProvider { *; }
+-keep class dev.signallake.SignalLakeDebugKeyProvider { *; }
+-keep class dev.signallake.Source { *; }
+-keep class dev.signallake.Identity { *; }
+-keep class dev.signallake.EncryptedEventBatch { *; }
+-dontwarn dev.signallake.**

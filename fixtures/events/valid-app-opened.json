@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "signallake.event-envelope.v1",
+  "catalogVersion": "signallake.catalog.picpeek.v1",
+  "eventId": "11111111-1111-4111-8111-111111111111",
+  "occurredAt": "2026-07-05T06:00:00.000Z",
+  "collectedAt": "2026-07-05T06:00:00.100Z",
+  "source": {
+    "appId": "app.picpeek.desktop",
+    "product": "PicPeek",
+    "sdkName": "signallake-js-tauri",
+    "sdkVersion": "0.0.0-phase0a",
+    "platform": "tauri",
+    "appVersion": "0.1.0",
+    "environment": "test"
+  },
+  "identity": {
+    "anonymousId": "anon_picpeek_dev_001",
+    "deviceId": "device_picpeek_dev_001"
+  },
+  "session": {
+    "sessionId": "session_picpeek_dev_001",
+    "startedAt": "2026-07-05T06:00:00.000Z",
+    "sequence": 1
+  },
+  "event": {
+    "name": "app.opened",
+    "category": "lifecycle",
+    "properties": {
+      "launchType": "manual"
+    }
+  },
+  "privacy": {
+    "privacyClass": "behavioral",
+    "consent": {
+      "analytics": true,
+      "diagnostics": true
+    },
+    "redactedFields": []
+  }
+}
