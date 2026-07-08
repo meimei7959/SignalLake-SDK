@@ -1,6 +1,7 @@
 import {
   buildBatch,
   createEventBuilder,
+  createDiskEncryptedBatchQueue,
   createMemoryQueue,
   encryptBatch,
   normalizeEncryptionKey
@@ -9,9 +10,18 @@ import {
 export function createTauriSignalLake(options) {
   const builder = createEventBuilder(options);
   const queue = options.queue ?? createMemoryQueue(options.queueOptions);
+  const diskQueue =
+    options.diskQueue ??
+    (options.diskQueueDirectory
+      ? createDiskEncryptedBatchQueue({
+          directory: options.diskQueueDirectory,
+          policy: options.storagePolicy
+        })
+      : null);
 
   return {
     queue,
+    diskQueue,
     trackAppOpened(properties = {}) {
       return enqueue(
         builder.buildEvent({
@@ -68,10 +78,30 @@ export function createTauriSignalLake(options) {
     },
     async drainEncryptedBatch(limit = 500, encryption = options.encryption) {
       normalizeEncryptionKey(encryption);
+      if (diskQueue) {
+        const events = queue.drain(limit);
+        if (events.length) {
+          const batch = buildBatch({ source: options.source, events });
+          const encrypted = await encryptBatch(batch, encryption);
+          await diskQueue.enqueue(encrypted);
+        }
+        const pending = await diskQueue.peek();
+        if (pending) return pending.batch;
+        return null;
+      }
       const events = queue.drain(limit);
       if (!events.length) return null;
       const batch = buildBatch({ source: options.source, events });
-      return encryptBatch(batch, encryption);
+      const encrypted = await encryptBatch(batch, encryption);
+      if (diskQueue) await diskQueue.enqueue(encrypted);
+      return encrypted;
+    },
+    async ackEncryptedBatch(encryptedBatch) {
+      if (!diskQueue || !encryptedBatch) return false;
+      const pending = await diskQueue.peek();
+      if (!pending || pending.batch.batchId !== encryptedBatch.batchId) return false;
+      await diskQueue.delete(pending);
+      return true;
     }
   };
 

@@ -10,6 +10,11 @@ let package = Package(
         .library(name: "SignalLake", targets: ["SignalLake"])
     ],
     targets: [
-        .target(name: "SignalLake", path: "Sources/SignalLake")
+        .target(name: "SignalLake", path: "Sources/SignalLake"),
+        .testTarget(
+            name: "SignalLakeTests",
+            dependencies: ["SignalLake"],
+            path: "Tests/SignalLakeTests"
+        )
     ]
 )

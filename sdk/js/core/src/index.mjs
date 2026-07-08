@@ -1,5 +1,10 @@
 export { buildBatch } from "./batch-builder.mjs";
 export {
+  SignalLakeDropPolicy,
+  createDiskEncryptedBatchQueue,
+  createStoragePolicy
+} from "./disk-encrypted-batch-queue.mjs";
+export {
   COMMON_FIELDS_NAMING,
   COMMON_FIELDS_VERSION,
   SignalLakeCommonFields,

@@ -16,7 +16,11 @@ public final class RealSignalLakeClient implements SignalLakeClient {
     private final AesGcmBatchEncryptor encryptor;
     private final ExecutorService executor;
     private final Object pendingLock = new Object();
+    private final Object flushLock = new Object();
     private PendingUpload pendingUpload;
+    private FlushTask scheduledFlush;
+    private int retryCount = 0;
+    private long nextRetryAtMs = 0;
     private volatile boolean closed = false;
 
     public RealSignalLakeClient(SignalLakeConfig config) {
@@ -81,14 +85,12 @@ public final class RealSignalLakeClient implements SignalLakeClient {
     @Override
     public Future<FlushResult> flush() {
         if (closed) return new CompletedFuture<FlushResult>(FlushResult.noop());
-        FutureTask<FlushResult> task = new FutureTask<FlushResult>(new java.util.concurrent.Callable<FlushResult>() {
-            @Override
-            public FlushResult call() {
-                return flushBlocking();
-            }
-        });
-        executor.execute(task);
-        return task;
+        synchronized (flushLock) {
+            if (scheduledFlush != null && !scheduledFlush.isDone()) return scheduledFlush;
+            scheduledFlush = new FlushTask();
+            executor.execute(scheduledFlush);
+            return scheduledFlush;
+        }
     }
 
     @Override
@@ -103,21 +105,33 @@ public final class RealSignalLakeClient implements SignalLakeClient {
     }
 
     private FlushResult flushBlocking() {
+        persistQueuedBatchToDisk();
         PendingUpload upload = getOrCreatePendingUpload();
         if (upload == null) return FlushResult.empty();
         if (config.uploader == null) {
             return FlushResult.failedNoUploader(upload.batchId);
         }
+        long now = System.currentTimeMillis();
+        if (now < nextRetryAtMs) {
+            return FlushResult.retainedForRetry(upload.batchId, 0, "retry backoff active");
+        }
         try {
             UploadResult result = config.uploader.upload(upload.batch);
             if (result.ok) {
                 synchronized (pendingLock) {
+                    if (pendingUpload == upload && upload.diskBatch != null && config.diskQueue != null) {
+                        config.diskQueue.delete(upload.diskBatch);
+                    }
                     if (pendingUpload == upload) pendingUpload = null;
+                    retryCount = 0;
+                    nextRetryAtMs = 0;
                 }
                 return FlushResult.accepted(upload.batchId, result.statusCode, result.message);
             }
+            rememberRetry();
             return FlushResult.retainedForRetry(upload.batchId, result.statusCode, result.message);
         } catch (Throwable error) {
+            rememberRetry();
             return FlushResult.retainedForRetry(
                     upload.batchId,
                     0,
@@ -125,9 +139,36 @@ public final class RealSignalLakeClient implements SignalLakeClient {
         }
     }
 
+    private void persistQueuedBatchToDisk() {
+        if (config.diskQueue == null) return;
+        synchronized (pendingLock) {
+            List<EventEnvelope> drained = queue.drain(config.queuePolicy.flushBatchSize);
+            if (drained.isEmpty()) return;
+            try {
+                EventBatch batch = BatchBuilder.buildBatch(
+                        UUID.randomUUID().toString(),
+                        TimeUtil.isoNow(),
+                        config.source,
+                        drained);
+                EncryptedEventBatch encrypted = encryptor.encrypt(batch, config.encryptionKey);
+                DiskEncryptedBatchQueue.PendingBatch diskBatch = config.diskQueue.enqueue(encrypted);
+                if (diskBatch == null) queue.restoreFront(drained);
+            } catch (Throwable error) {
+                queue.restoreFront(drained);
+            }
+        }
+    }
+
     private PendingUpload getOrCreatePendingUpload() {
         synchronized (pendingLock) {
             if (pendingUpload != null) return pendingUpload;
+            if (config.diskQueue != null) {
+                DiskEncryptedBatchQueue.PendingBatch diskBatch = config.diskQueue.peek();
+                if (diskBatch != null) {
+                    pendingUpload = new PendingUpload(diskBatch.batch.batchId, diskBatch.batch, diskBatch);
+                    return pendingUpload;
+                }
+            }
             List<EventEnvelope> drained = queue.drain(config.queuePolicy.flushBatchSize);
             if (drained.isEmpty()) return null;
             try {
@@ -137,12 +178,24 @@ public final class RealSignalLakeClient implements SignalLakeClient {
                         config.source,
                         drained);
                 EncryptedEventBatch encrypted = encryptor.encrypt(batch, config.encryptionKey);
-                pendingUpload = new PendingUpload(encrypted.batchId, encrypted);
+                DiskEncryptedBatchQueue.PendingBatch diskBatch = null;
+                if (config.diskQueue != null) {
+                    diskBatch = config.diskQueue.enqueue(encrypted);
+                }
+                pendingUpload = new PendingUpload(encrypted.batchId, encrypted, diskBatch);
                 return pendingUpload;
             } catch (Throwable error) {
                 queue.restoreFront(drained);
                 return null;
             }
+        }
+    }
+
+    private void rememberRetry() {
+        synchronized (pendingLock) {
+            retryCount = Math.min(retryCount + 1, 9);
+            long delayMs = Math.min(300000L, 1000L << (retryCount - 1));
+            nextRetryAtMs = System.currentTimeMillis() + delayMs;
         }
     }
 
@@ -163,10 +216,33 @@ public final class RealSignalLakeClient implements SignalLakeClient {
     private static final class PendingUpload {
         final String batchId;
         final EncryptedEventBatch batch;
+        final DiskEncryptedBatchQueue.PendingBatch diskBatch;
 
-        PendingUpload(String batchId, EncryptedEventBatch batch) {
+        PendingUpload(
+                String batchId,
+                EncryptedEventBatch batch,
+                DiskEncryptedBatchQueue.PendingBatch diskBatch) {
             this.batchId = batchId;
             this.batch = batch;
+            this.diskBatch = diskBatch;
+        }
+    }
+
+    private final class FlushTask extends FutureTask<FlushResult> {
+        FlushTask() {
+            super(new java.util.concurrent.Callable<FlushResult>() {
+                @Override
+                public FlushResult call() {
+                    return RealSignalLakeClient.this.flushBlocking();
+                }
+            });
+        }
+
+        @Override
+        protected void done() {
+            synchronized (flushLock) {
+                if (scheduledFlush == this) scheduledFlush = null;
+            }
         }
     }
 }

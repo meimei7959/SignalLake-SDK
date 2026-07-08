@@ -12,6 +12,13 @@ Gradle target:
 ./gradlew -p sdk/android :signallake-android:assembleRelease
 ```
 
+Installable stress demo:
+
+```bash
+gradle -p sdk/android :signallake-stress-demo:installDebug
+npm run stress:android-click
+```
+
 The expected AAR path after a successful Android build is:
 
 ```text
@@ -26,10 +33,27 @@ sdk/android/signallake-android/build/outputs/aar/signallake-android-release.aar
 - consumer ProGuard/R8 rules in `signallake-android/consumer-rules.pro`
 - platform `HttpURLConnection` uploader
 - API 19-compatible `AES/GCM/NoPadding` encryption
-- in-memory ring queue only; no plaintext disk queue
+- in-memory ring queue by default
+- optional encrypted disk queue under the host app's private files directory
+- no plaintext disk queue
+- installable `signallake-stress-demo` app for real-device click testing
 
 The SDK manifest does not add network permission automatically. Host apps that
 enable upload should declare `android.permission.INTERNET`.
+
+Disk queue is opt-in. If the host does not call `diskQueue(...)`, the SDK keeps
+the current memory-only behavior and does not write files. When enabled with an
+Android `Context`, the SDK stores encrypted batches under
+`getNoBackupFilesDir()/signallake/queue` on API 21+, with an API 19 fallback to
+`getFilesDir()/signallake/queue`. Host apps should pass a
+`SignalLakeStoragePolicy` to cap disk bytes and batch count; when the cap is hit,
+the default policy drops the oldest encrypted batch.
+
+The Android click stress demo installs `dev.signallake.demo` and exposes four
+buttons: `Clear`, `Run Offline`, `Recover`, and `Run Slow`. The adb test taps
+the real UI, then reads the demo status file with `run-as` to verify bounded
+encrypted disk cache, no plaintext leak, upload recovery, and max in-flight
+upload of `1`.
 
 ## Consent Boundary
 

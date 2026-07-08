@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "signallake-android"
 include(":signallake-android")
+include(":signallake-stress-demo")

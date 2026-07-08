@@ -4,6 +4,7 @@ import {
   buildBatch,
   buildCommonProperties,
   createEventBuilder,
+  createDiskEncryptedBatchQueue,
   createMemoryQueue,
   decryptBatch,
   encryptBatch,
@@ -12,6 +13,9 @@ import {
   SignalLakeCommonFields,
   SignalLakeCommonValues
 } from "../sdk/js/core/src/index.mjs";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import { castReceiverCatalog, picpeekCatalog } from "./helpers/catalogs.mjs";
 import { testEncryption } from "./helpers/encryption.mjs";
 
@@ -152,6 +156,91 @@ test("upload batch is encrypted before leaving SDK boundary", async () => {
   assert.equal(encrypted.payload.encoding, "base64url");
   assert.equal(encrypted.payload.ciphertext.includes("app.opened"), false);
   assert.deepEqual(decrypted, batch);
+});
+
+test("JS encrypted disk queue is opt-in, bounded, and stores no plaintext events", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "signallake-js-queue-"));
+  const builder = createEventBuilder({ source, identity, session, catalog: picpeekCatalog });
+  const batch = buildBatch({
+    source,
+    events: [
+      builder.buildEvent({
+        name: "app.opened",
+        category: "lifecycle",
+        properties: { launchType: "manual" }
+      })
+    ]
+  });
+  const encrypted = await encryptBatch(batch, testEncryption);
+  const diskQueue = createDiskEncryptedBatchQueue({
+    directory,
+    policy: { maxDiskBytes: 1024 * 1024, maxDiskBatches: 1 }
+  });
+
+  await diskQueue.enqueue(encrypted);
+  const pending = await diskQueue.peek();
+  const files = await fs.readdir(directory);
+  const contents = await fs.readFile(path.join(directory, files[0]), "utf8");
+
+  assert.equal(await diskQueue.count(), 1);
+  assert.equal(pending.batch.batchId, encrypted.batchId);
+  assert.equal(contents.includes("app.opened"), false);
+  assert.equal(contents.includes("ciphertext"), true);
+
+  const second = await encryptBatch(
+    buildBatch({
+      source,
+      events: [
+        builder.buildEvent({
+          name: "screen.viewed",
+          category: "screen",
+          properties: { screenId: "library" }
+        })
+      ]
+    }),
+    testEncryption
+  );
+  await diskQueue.enqueue(second);
+  assert.equal(await diskQueue.count(), 1);
+  assert.equal((await diskQueue.peek()).batch.batchId, second.batchId);
+});
+
+test("JS encrypted disk queue stress drops oldest batches under pressure", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "signallake-js-queue-stress-"));
+  const builder = createEventBuilder({ source, identity, session, catalog: picpeekCatalog });
+  const diskQueue = createDiskEncryptedBatchQueue({
+    directory,
+    policy: { maxDiskBytes: 1024 * 1024, maxDiskBatches: 40 }
+  });
+
+  for (let index = 0; index < 120; index++) {
+    const batch = buildBatch({
+      source,
+      batchId: `stress-${String(index).padStart(3, "0")}`,
+      events: [
+        builder.buildEvent({
+          name: "app.opened",
+          category: "lifecycle",
+          properties: { launchType: "manual" }
+        })
+      ]
+    });
+    await diskQueue.enqueue(await encryptBatch(batch, testEncryption));
+  }
+
+  const files = await fs.readdir(directory);
+  const pending = await diskQueue.peek();
+  const joined = await Promise.all(
+    files.map((file) => fs.readFile(path.join(directory, file), "utf8"))
+  );
+
+  assert.equal(await diskQueue.count(), 40);
+  assert.ok((await diskQueue.sizeBytes()) <= 1024 * 1024);
+  assert.equal(pending.batch.batchId, "stress-080");
+  assert.equal(joined.join("\n").includes("app.opened"), false);
+
+  await diskQueue.delete(pending);
+  assert.equal(await diskQueue.count(), 39);
 });
 
 test("Cast receiver catalog governs shared operation fields", () => {

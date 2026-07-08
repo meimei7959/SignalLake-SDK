@@ -48,6 +48,80 @@ test("Android SDK queue drains batches and retains pending encrypted upload for 
   assert.match(client, /retainedForRetry/);
 });
 
+test("Android SDK disk queue is opt-in and host scoped", () => {
+  const config = read(`${javaRoot}/SignalLakeConfig.java`);
+  const policy = read(`${javaRoot}/SignalLakeStoragePolicy.java`);
+  const readme = read("sdk/android/README.md");
+
+  assert.match(config, /diskQueue\(Context context, SignalLakeStoragePolicy storagePolicy\)/);
+  assert.match(config, /getNoBackupFilesDir\(\)/);
+  assert.match(config, /getFilesDir\(\)/);
+  assert.match(config, /new File\(new File\(root, "signallake"\), "queue"\)/);
+  assert.match(config, /private DiskEncryptedBatchQueue diskQueue;/);
+  assert.match(policy, /DEFAULT_MAX_DISK_BYTES = 1024L \* 1024L/);
+  assert.match(policy, /DEFAULT_MAX_DISK_BATCHES = 100/);
+  assert.match(readme, /Disk queue is opt-in/);
+  assert.match(readme, /If the host does not call `diskQueue\(\.\.\.\)`, the SDK keeps/);
+});
+
+test("Android SDK encrypted disk queue is bounded and never stores plaintext events", () => {
+  const disk = read(`${javaRoot}/DiskEncryptedBatchQueue.java`);
+  const codec = read(`${javaRoot}/JsonCodec.java`);
+  const client = read(`${javaRoot}/RealSignalLakeClient.java`);
+
+  assert.match(disk, /JsonCodec\.encryptedBatchToJson/);
+  assert.match(disk, /JsonCodec\.encryptedBatchFromJson/);
+  assert.doesNotMatch(disk, /eventBatchToJson/);
+  assert.match(disk, /maxDiskBytes/);
+  assert.match(disk, /maxDiskBatches/);
+  assert.match(disk, /DROP_NEWEST/);
+  assert.match(disk, /oldest\.delete\(\)/);
+  assert.match(disk, /RandomAccessFile/);
+  assert.doesNotMatch(disk, /SharedPreferences|SQLite|\bRoom\b|FileOutputStream/);
+  assert.match(codec, /encryptedBatchFromJson/);
+  assert.match(client, /config\.diskQueue\.peek\(\)/);
+  assert.match(client, /config\.diskQueue\.enqueue\(encrypted\)/);
+  assert.match(client, /config\.diskQueue\.delete\(upload\.diskBatch\)/);
+  assert.match(client, /persistQueuedBatchToDisk/);
+  assert.match(client, /scheduledFlush/);
+  assert.match(client, /nextRetryAtMs/);
+});
+
+test("Android SDK includes stress demo for weak network and bounded disk queue", () => {
+  const sample = read("sdk/android/samples/StressDemoApp.java");
+
+  assert.match(sample, /SignalLakeStoragePolicy/);
+  assert.match(sample, /diskQueue\(/);
+  assert.match(sample, /runOfflineBurst/);
+  assert.match(sample, /runSlowFlushPressure/);
+  assert.match(sample, /recoverUploads/);
+  assert.match(sample, /maxInFlight/);
+});
+
+test("Android SDK includes installable stress demo app and adb click test", () => {
+  const settings = read("sdk/android/settings.gradle.kts");
+  const rootBuild = read("sdk/android/build.gradle.kts");
+  const appBuild = read("sdk/android/signallake-stress-demo/build.gradle.kts");
+  const manifest = read("sdk/android/signallake-stress-demo/src/main/AndroidManifest.xml");
+  const activity = read("sdk/android/signallake-stress-demo/src/main/java/dev/signallake/demo/StressDemoActivity.java");
+  const script = read("demos/stress/android-click-test.mjs");
+
+  assert.match(settings, /include\(":signallake-stress-demo"\)/);
+  assert.match(rootBuild, /com\.android\.application/);
+  assert.match(appBuild, /id\("com\.android\.application"\)/);
+  assert.match(appBuild, /applicationId = "dev\.signallake\.demo"/);
+  assert.match(appBuild, /implementation\(project\(":signallake-android"\)\)/);
+  assert.match(activity, /Run Offline/);
+  assert.match(activity, /Recover/);
+  assert.match(activity, /STATUS offline_done/);
+  assert.match(activity, /STATUS recover_done/);
+  assert.match(activity, /plaintextLeak/);
+  assert.match(script, /uiautomator/);
+  assert.match(script, /input", "tap"/);
+  assert.match(script, /STATUS offline_done/);
+  assert.match(script, /STATUS recover_done/);
+});
+
 test("Android SDK provides key provider and async start API", () => {
   const signalLake = read(`${javaRoot}/SignalLake.java`);
   const provider = read(`${javaRoot}/SignalLakeKeyProvider.java`);
@@ -182,7 +256,6 @@ test("Android SDK has no default heavy client dependencies", () => {
     "gson",
     "retrofit",
     "room-runtime",
-    "java.io.file",
     "fileoutputstream",
     "sharedpreferences"
   ]) {

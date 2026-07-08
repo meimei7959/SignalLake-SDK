@@ -8,9 +8,10 @@ const errors = [];
 
 mustContain("sdk/android/settings.gradle.kts", [
   "pluginManagement",
-  "include(\":signallake-android\")"
+  "include(\":signallake-android\")",
+  "include(\":signallake-stress-demo\")"
 ]);
-mustContain("sdk/android/build.gradle.kts", ["com.android.library"]);
+mustContain("sdk/android/build.gradle.kts", ["com.android.library", "com.android.application"]);
 mustContain(`${moduleRoot}/build.gradle.kts`, [
   "com.android.library",
   "namespace = \"dev.signallake\"",
@@ -39,6 +40,8 @@ for (const file of [
   "EncryptedBatchUploader.java",
   "HttpUrlConnectionEncryptedBatchUploader.java",
   "RingMemoryQueue.java",
+  "DiskEncryptedBatchQueue.java",
+  "SignalLakeStoragePolicy.java",
   "PrivacyGuard.java",
   "SignalLakeCommonFields.java",
   "SignalLakeCommonValues.java",
@@ -51,6 +54,11 @@ for (const file of [
 for (const file of [
   "docs/integration/android-production-closure.md",
   "sdk/android/samples/ProductionKeyProviderExample.java",
+  "sdk/android/samples/StressDemoApp.java",
+  "sdk/android/signallake-stress-demo/build.gradle.kts",
+  "sdk/android/signallake-stress-demo/src/main/AndroidManifest.xml",
+  "sdk/android/signallake-stress-demo/src/main/java/dev/signallake/demo/StressDemoActivity.java",
+  "demos/stress/android-click-test.mjs",
   "scripts/android/verify-release.sh",
   "scripts/android/assemble-android-test.sh",
   "scripts/android/verify-api19-emulator.sh",
@@ -135,6 +143,37 @@ mustContain(`${sourceRoot}/RingMemoryQueue.java`, [
   "restoreFront",
   "policy.maxEvents"
 ]);
+mustContain(`${sourceRoot}/SignalLakeStoragePolicy.java`, [
+  "DEFAULT_MAX_DISK_BYTES = 1024L * 1024L",
+  "DEFAULT_MAX_DISK_BATCHES = 100",
+  "DropPolicy.DROP_OLDEST"
+]);
+mustContain(`${sourceRoot}/DiskEncryptedBatchQueue.java`, [
+  "JsonCodec.encryptedBatchToJson",
+  "JsonCodec.encryptedBatchFromJson",
+  "maxDiskBytes",
+  "maxDiskBatches",
+  "oldest.delete()"
+]);
+mustNotContain(`${sourceRoot}/DiskEncryptedBatchQueue.java`, [
+  "eventBatchToJson",
+  "FileOutputStream",
+  "SharedPreferences"
+]);
+mustContain(`${sourceRoot}/SignalLakeConfig.java`, [
+  "diskQueue(Context context, SignalLakeStoragePolicy storagePolicy)",
+  "getNoBackupFilesDir()",
+  "getFilesDir()",
+  "new File(new File(root, \"signallake\"), \"queue\")"
+]);
+mustContain(`${sourceRoot}/RealSignalLakeClient.java`, [
+  "config.diskQueue.peek()",
+  "config.diskQueue.enqueue(encrypted)",
+  "config.diskQueue.delete(upload.diskBatch)",
+  "persistQueuedBatchToDisk",
+  "scheduledFlush",
+  "nextRetryAtMs"
+]);
 mustContain(`${sourceRoot}/SignalLakeCommonFields.java`, [
   "VERSION = \"signallake.common-fields.v1\"",
   "NAMING = \"camelCase\"",
@@ -194,6 +233,43 @@ mustContain("scripts/android/assemble-android-test.sh", [
   ":signallake-android:assembleAndroidTest",
   "ANDROID_TEST_APK_BYTES"
 ]);
+mustContain("sdk/android/samples/StressDemoApp.java", [
+  "SignalLakeStoragePolicy",
+  "diskQueue(",
+  "runOfflineBurst",
+  "runSlowFlushPressure",
+  "recoverUploads",
+  "maxInFlight"
+]);
+mustContain("sdk/android/signallake-stress-demo/build.gradle.kts", [
+  "com.android.application",
+  "applicationId = \"dev.signallake.demo\"",
+  "implementation(project(\":signallake-android\"))"
+]);
+mustContain("sdk/android/signallake-stress-demo/src/main/AndroidManifest.xml", [
+  "SignalLake Stress Demo",
+  ".StressDemoActivity",
+  "android.intent.action.MAIN"
+]);
+mustContain("sdk/android/signallake-stress-demo/src/main/java/dev/signallake/demo/StressDemoActivity.java", [
+  "Run Offline",
+  "Run Slow",
+  "Recover",
+  "STATUS offline_done",
+  "STATUS recover_done",
+  "SignalLakeStoragePolicy",
+  "diskQueue(",
+  "plaintextLeak",
+  "maxInFlight"
+]);
+mustContain("demos/stress/android-click-test.mjs", [
+  "uiautomator",
+  "\"input\", \"tap\"",
+  "STATUS offline_done",
+  "STATUS recover_done",
+  "plaintextLeak",
+  "maxInFlight"
+]);
 mustContain(`${moduleRoot}/src/androidTest/java/dev/signallake/Api19CryptoInstrumentedTest.java`, [
   "AesGcmBatchEncryptor",
   "AES-256-GCM",
@@ -224,7 +300,6 @@ mustNotContain(moduleRoot, [
   "gson",
   "retrofit",
   "room-runtime",
-  "java.io.file",
   "fileoutputstream",
   "sharedpreferences"
 ]);
@@ -235,7 +310,7 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log("android-sdk-check ok: Android AAR module, consent gate, AES-GCM, uploader, queue, and privacy checks verified");
+console.log("android-sdk-check ok: Android AAR module, consent gate, AES-GCM, uploader, memory/disk queue, demo app, click test, and privacy checks verified");
 
 function exists(file) {
   return fs.existsSync(path.join(repoRoot, file));

@@ -23,8 +23,10 @@ build/
 # Android / Gradle outputs
 .gradle/
 **/.gradle/
+**/.build/
 **/build/
 **/target/
+sdk/android/local.properties
 *.iml
 .idea/
 sdk/android/.gradle/

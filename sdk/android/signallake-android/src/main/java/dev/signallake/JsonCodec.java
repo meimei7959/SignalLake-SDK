@@ -26,6 +26,25 @@ final class JsonCodec {
         }
     }
 
+    static EncryptedEventBatch encryptedBatchFromJson(String json) {
+        try {
+            JSONObject root = new JSONObject(json);
+            JSONObject payload = root.getJSONObject("payload");
+            return new EncryptedEventBatch(
+                    root.getString("batchId"),
+                    root.getString("createdAt"),
+                    uploadSourceFromObject(root.getJSONObject("source")),
+                    plaintextFromObject(root.getJSONObject("plaintext")),
+                    encryptionFromObject(root.getJSONObject("encryption")),
+                    new EncryptedPayload(
+                            payload.getString("encoding"),
+                            payload.getString("ciphertext"),
+                            payload.getString("authTag")));
+        } catch (JSONException error) {
+            throw new IllegalStateException("failed to decode encrypted event batch", error);
+        }
+    }
+
     static String encryptedBatchAad(EncryptedEventBatch batch) {
         try {
             JSONObject root = new JSONObject();
@@ -125,6 +144,15 @@ final class JsonCodec {
         return root;
     }
 
+    private static UploadSource uploadSourceFromObject(JSONObject source) throws JSONException {
+        return new UploadSource(
+                source.getString("appId"),
+                source.getString("product"),
+                source.getString("sdkName"),
+                source.getString("sdkVersion"),
+                source.getString("environment"));
+    }
+
     private static JSONObject identityObject(Identity identity) throws JSONException {
         JSONObject root = new JSONObject();
         root.put("anonymousId", identity.anonymousId);
@@ -148,12 +176,25 @@ final class JsonCodec {
         return root;
     }
 
+    private static PlaintextDescriptor plaintextFromObject(JSONObject plaintext) throws JSONException {
+        return new PlaintextDescriptor(
+                plaintext.getString("schemaVersion"),
+                plaintext.getString("contentType"));
+    }
+
     private static JSONObject encryptionObject(EncryptionMetadata encryption) throws JSONException {
         JSONObject root = new JSONObject();
         root.put("alg", encryption.alg);
         root.put("keyId", encryption.keyId);
         root.put("nonce", encryption.nonce);
         return root;
+    }
+
+    private static EncryptionMetadata encryptionFromObject(JSONObject encryption) throws JSONException {
+        return new EncryptionMetadata(
+                encryption.getString("alg"),
+                encryption.getString("keyId"),
+                encryption.getString("nonce"));
     }
 
     private static JSONObject propertiesObject(Map<String, Object> properties) throws JSONException {

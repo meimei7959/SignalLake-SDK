@@ -28,6 +28,10 @@ mustContain("sdk/rust/signallake-core/src/lib.rs", [
   "BATCH_SCHEMA_VERSION",
   "EventBuilder",
   "MemoryQueue",
+  "StoragePolicy",
+  "DiskEncryptedBatchQueue",
+  "encrypted_batch_to_json",
+  "encrypted_batch_from_json",
   "assert_privacy_safe",
   "build_batch",
   "EncryptedEventBatch",
@@ -82,10 +86,28 @@ mustContain("sdk/ios/Sources/SignalLake/SignalLake.swift", [
   "encryptedBatchSchemaVersion",
   "EventBuilder",
   "MemoryQueue",
+  "SignalLakeStoragePolicy",
+  "DiskEncryptedBatchQueue",
+  "applicationSupportQueueURL",
   "PrivacyGuard",
   "buildBatch",
   "EncryptedEventBatch",
   "buildEncryptedBatchEnvelope"
+]);
+mustContain("sdk/js/core/src/disk-encrypted-batch-queue.mjs", [
+  "createDiskEncryptedBatchQueue",
+  "createStoragePolicy",
+  "SignalLakeDropPolicy",
+  "maxDiskBytes",
+  "maxDiskBatches",
+  "DROP_OLDEST"
+]);
+mustContain("sdk/js/tauri/src/index.mjs", [
+  "diskQueueDirectory",
+  "ackEncryptedBatch",
+  "diskQueue.peek()",
+  "diskQueue.enqueue(encrypted)",
+  "const events = queue.drain(limit)"
 ]);
 mustContain("docs/integration/platform-lifecycle.md", [
   "app.opened",

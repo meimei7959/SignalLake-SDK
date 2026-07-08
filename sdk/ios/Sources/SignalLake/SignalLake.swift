@@ -60,7 +60,7 @@ public struct EventBatch: Equatable {
     public let events: [EventEnvelope]
 }
 
-public struct UploadSource: Equatable {
+public struct UploadSource: Equatable, Codable {
     public let appId: String
     public let product: String
     public let sdkName: String
@@ -68,24 +68,24 @@ public struct UploadSource: Equatable {
     public let environment: String
 }
 
-public struct PlaintextDescriptor: Equatable {
+public struct PlaintextDescriptor: Equatable, Codable {
     public let schemaVersion: String
     public let contentType: String
 }
 
-public struct EncryptionMetadata: Equatable {
+public struct EncryptionMetadata: Equatable, Codable {
     public let alg: String
     public let keyId: String
     public let nonce: String
 }
 
-public struct EncryptedPayload: Equatable {
+public struct EncryptedPayload: Equatable, Codable {
     public let encoding: String
     public let ciphertext: String
     public let authTag: String
 }
 
-public struct EncryptedEventBatch: Equatable {
+public struct EncryptedEventBatch: Equatable, Codable {
     public let schemaVersion: String
     public let batchId: String
     public let createdAt: String
@@ -98,6 +98,29 @@ public struct EncryptedEventBatch: Equatable {
 public enum SignalLakeError: Error, Equatable {
     case privacyViolation
     case queueFull
+}
+
+public enum SignalLakeDropPolicy: Equatable {
+    case dropOldest
+    case dropNewest
+}
+
+public struct SignalLakeStoragePolicy: Equatable {
+    public let maxDiskBytes: Int
+    public let maxDiskBatches: Int
+    public let dropPolicy: SignalLakeDropPolicy
+
+    public init(
+        maxDiskBytes: Int = 1024 * 1024,
+        maxDiskBatches: Int = 100,
+        dropPolicy: SignalLakeDropPolicy = .dropOldest
+    ) {
+        precondition(maxDiskBytes > 0, "maxDiskBytes must be positive")
+        precondition(maxDiskBatches > 0, "maxDiskBatches must be positive")
+        self.maxDiskBytes = maxDiskBytes
+        self.maxDiskBatches = maxDiskBatches
+        self.dropPolicy = dropPolicy
+    }
 }
 
 public final class EventBuilder {
@@ -162,6 +185,125 @@ public final class MemoryQueue {
 
     public var count: Int {
         items.count
+    }
+}
+
+public final class DiskEncryptedBatchQueue {
+    public struct PendingBatch: Equatable {
+        public let fileURL: URL
+        public let batch: EncryptedEventBatch
+    }
+
+    public let directoryURL: URL
+    public let policy: SignalLakeStoragePolicy
+    private let fileManager: FileManager
+    private let encoder = JSONEncoder()
+    private let decoder = JSONDecoder()
+
+    public init(
+        directoryURL: URL,
+        policy: SignalLakeStoragePolicy = SignalLakeStoragePolicy(),
+        fileManager: FileManager = .default
+    ) {
+        self.directoryURL = directoryURL
+        self.policy = policy
+        self.fileManager = fileManager
+    }
+
+    public static func applicationSupportQueueURL(bundleIdentifier: String) throws -> URL {
+        let root = try FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        return root
+            .appendingPathComponent(bundleIdentifier, isDirectory: true)
+            .appendingPathComponent("SignalLake", isDirectory: true)
+            .appendingPathComponent("Queue", isDirectory: true)
+    }
+
+    public func enqueue(_ batch: EncryptedEventBatch) throws -> PendingBatch? {
+        let data = try encoder.encode(batch)
+        guard data.count <= policy.maxDiskBytes else { return nil }
+        try ensureDirectory()
+        guard try makeRoom(incomingBytes: data.count) else { return nil }
+        let target = directoryURL.appendingPathComponent(fileName(batch.batchId))
+        let temp = directoryURL.appendingPathComponent(target.lastPathComponent + ".tmp")
+        try data.write(to: temp, options: .atomic)
+        try? fileManager.removeItem(at: target)
+        try fileManager.moveItem(at: temp, to: target)
+        try enforceBatchLimit()
+        return PendingBatch(fileURL: target, batch: batch)
+    }
+
+    public func peek() throws -> PendingBatch? {
+        for file in try batchFiles() {
+            do {
+                let data = try Data(contentsOf: file)
+                let batch = try decoder.decode(EncryptedEventBatch.self, from: data)
+                return PendingBatch(fileURL: file, batch: batch)
+            } catch {
+                try? fileManager.removeItem(at: file)
+            }
+        }
+        return nil
+    }
+
+    public func delete(_ pendingBatch: PendingBatch) {
+        try? fileManager.removeItem(at: pendingBatch.fileURL)
+    }
+
+    public var count: Int {
+        (try? batchFiles().count) ?? 0
+    }
+
+    public var sizeBytes: Int {
+        ((try? batchFiles()) ?? []).reduce(0) { total, file in
+            let values = try? file.resourceValues(forKeys: [.fileSizeKey])
+            return total + (values?.fileSize ?? 0)
+        }
+    }
+
+    private func ensureDirectory() throws {
+        try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        var url = directoryURL
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
+    }
+
+    private func makeRoom(incomingBytes: Int) throws -> Bool {
+        if policy.dropPolicy == .dropNewest {
+            return count < policy.maxDiskBatches && sizeBytes + incomingBytes <= policy.maxDiskBytes
+        }
+        while count >= policy.maxDiskBatches || sizeBytes + incomingBytes > policy.maxDiskBytes {
+            guard let oldest = try batchFiles().first else { return false }
+            try fileManager.removeItem(at: oldest)
+        }
+        return true
+    }
+
+    private func enforceBatchLimit() throws {
+        while count > policy.maxDiskBatches {
+            guard let oldest = try batchFiles().first else { return }
+            try fileManager.removeItem(at: oldest)
+        }
+    }
+
+    private func batchFiles() throws -> [URL] {
+        guard fileManager.fileExists(atPath: directoryURL.path) else { return [] }
+        return try fileManager
+            .contentsOfDirectory(at: directoryURL, includingPropertiesForKeys: [.fileSizeKey])
+            .filter { $0.lastPathComponent.hasSuffix(".batch") }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+    }
+
+    private func fileName(_ batchId: String) -> String {
+        let safeId = batchId.map { char -> Character in
+            char.isLetter || char.isNumber || char == "-" || char == "_" ? char : "_"
+        }
+        return "\(Int(Date().timeIntervalSince1970 * 1000))-\(String(safeId)).batch"
     }
 }
 

@@ -1,5 +1,10 @@
 package dev.signallake;
 
+import android.content.Context;
+import android.os.Build;
+
+import java.io.File;
+
 public final class SignalLakeConfig {
     public final Source source;
     public final Identity identity;
@@ -8,6 +13,7 @@ public final class SignalLakeConfig {
     public final SignalLakeEventCatalog eventCatalog;
     public final SignalLakeEncryptionKey encryptionKey;
     public final SignalLakeQueuePolicy queuePolicy;
+    final DiskEncryptedBatchQueue diskQueue;
     public final EncryptedBatchUploader uploader;
     public final SignalLakeRejectListener rejectListener;
 
@@ -22,6 +28,7 @@ public final class SignalLakeConfig {
         this.queuePolicy = builder.queuePolicy == null
                 ? SignalLakeQueuePolicy.androidTvDefault()
                 : builder.queuePolicy;
+        this.diskQueue = builder.diskQueue;
         this.uploader = builder.uploader;
         this.rejectListener = builder.rejectListener;
     }
@@ -34,6 +41,7 @@ public final class SignalLakeConfig {
         private SignalLakeEventCatalog eventCatalog;
         private SignalLakeEncryptionKey encryptionKey;
         private SignalLakeQueuePolicy queuePolicy;
+        private DiskEncryptedBatchQueue diskQueue;
         private EncryptedBatchUploader uploader;
         private SignalLakeRejectListener rejectListener;
 
@@ -65,6 +73,21 @@ public final class SignalLakeConfig {
 
         public Builder queuePolicy(SignalLakeQueuePolicy queuePolicy) {
             this.queuePolicy = queuePolicy;
+            return this;
+        }
+
+        public Builder diskQueue(Context context, SignalLakeStoragePolicy storagePolicy) {
+            Context safeContext = Require.notNull(context, "context");
+            File root = Build.VERSION.SDK_INT >= 21
+                    ? safeContext.getNoBackupFilesDir()
+                    : safeContext.getFilesDir();
+            return diskQueue(new File(new File(root, "signallake"), "queue"), storagePolicy);
+        }
+
+        public Builder diskQueue(File queueDirectory, SignalLakeStoragePolicy storagePolicy) {
+            this.diskQueue = new DiskEncryptedBatchQueue(
+                    Require.notNull(queueDirectory, "queueDirectory"),
+                    storagePolicy);
             return this;
         }
 
